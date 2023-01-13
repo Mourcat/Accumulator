@@ -1,33 +1,106 @@
 #: import Animation kivy.animation.Animation
 #: import Clock kivy.clock.Clock
+#: import Clipboard kivy.core.clipboard.Clipboard
 #: import ew kivy.uix.effectwidget
+#: import toast kivymd.toast.toast
+#: import os os
 #: import choice random.choice
 
 
+<SettingsCls>
+    orientation: 'vertical'
+    size_hint_y: None
+    height: dp(400)
+    
+    MDGridLayout:
+        cols: 2
+        spacing: dp(24)
+    
+        MDIcon:
+            icon: 'camera-timer'
+            user_font_size: sp(14)
+            size_hint: None, None
+                            
+        MDSlider:
+            id: interval
+            min: .5
+            max: 5
+            value: app.root.cam.burst_timestop
+            step: .5
+            size_hint_y: None
+            height: dp(10)
+            pos_hint: {'center_y': .5}
+            on_value: 
+                app.root.cam.burst_timestop = self.value
+                        
+        MDIcon:
+            icon: 'image-multiple'
+            user_font_size: sp(14)
+            size_hint: None, None                
+                        
+        MDSlider:
+            id: quantity
+            min: 1
+            max: 10
+            value: app.root.cam.quantity
+            step: 1
+            size_hint_y: None
+            height: sp(14)
+            pos_hint: {'center_y': .5}
+            on_value:
+                app.root.cam.quantity = self.value
+                
+                            
 <ImgCard>
     orientation: 'vertical'
     size_hint: .23, None
     height: dp(230)
-    radius: [dp(8),]
+    radius: [dp(24),]
     md_bg_color: 'black'
+    ripple_behavior: True
     canvas:
         Color:
             rgba: 1, 0, 0, 1
         Line:
             width : 2
-            rounded_rectangle: (self.x, self.y, self.width, self.height, dp(8))
+            rounded_rectangle: (self.x, self.y, self.width, self.height, dp(24))
     on_release:
         app.root.ids.viewer.opacity = 0
-        app.root.ids.viewer.source = root.source
-        item_lbl.text = f'{root.img_width}×{root.img_height} {root.text}'
-        Animation(opacity=1). start(app.root.ids.viewer)
+        app.root.ids.viewer.source = root.source       
+        Animation(opacity=1).start(app.root.ids.viewer)
     
-    MDIconButton:
-        icon: 'close'
-        size_hint: None, None
+    MDBoxLayout:
         pos_hint: {'right': 1, 'top': .1}
-        on_release:
-            app.root.ids.grid.remove_widget(self.parent)
+        adaptive_size: True
+
+        MDIconButton:
+            icon: 'camera-timer'
+            user_font_size: sp(16)
+            theme_text_color: 'Custom'
+            icon_color: app.theme_cls.accent_color
+            size_hint: None, None
+            on_release:
+                pass
+
+        MDIconButton:
+            icon: 'clipboard'
+            user_font_size: sp(16)
+            theme_text_color: 'Custom'
+            icon_color: app.theme_cls.accent_color
+            size_hint: None, None
+            on_release:
+                Clipboard.copy(self.parent.parent.source)
+                toast(f'Copied {self.parent.parent.text} path to clipboard')
+        
+        MDIconButton:
+            icon: 'close'
+            user_font_size: sp(16)
+            theme_text_color: 'Custom'
+            icon_color: app.theme_cls.accent_color
+            size_hint: None, None
+            on_release:
+                app.root.ids.grid.remove_widget(self.parent.parent)
+                os.remove(self.parent.parent.source)
 
     MDBoxLayout:
         orientation: 'vertical'
@@ -38,7 +111,6 @@
                 
         MDLabel:
             id: item_lbl
-            text: f'{root.img_width} × {root.img_height} {root.text}'
             theme_text_color: 'Custom'
             text_color: app.theme_cls.primary_dark
             font_style: 'Button'
@@ -55,7 +127,7 @@
 <Cam>
     index: 0
     size_hint: None, None
-    resolution: 1920, 1080
+    resolution: 640, 480
     allow_stretch: True
     elevation: dp(13)
 
@@ -68,18 +140,20 @@
                         
         MDBoxLayout:
             orientation: 'vertical'
+            spacing: dp(17)
 
             MDBoxLayout:
                 id: top_bar
                 size_hint_y: None
-                height: dp(72)
+                height: dp(52)
                 pos_hint: {'top': 1}
+                md_bg_color: 0, .12, .24, 1
                 
                 MDIconButton:
                     icon: 'menu'
                     pos_hint: {'center_y': .5}
                     theme_text_color: 'Custom'
-                    icon_color: app.theme_cls.primary_dark
+                    icon_color: app.theme_cls.primary_light
                     on_release: nav_drawer.set_state('open')
                     
                 MDWidget:
@@ -88,7 +162,7 @@
                     icon: 'wrench'
                     pos_hint: {'center_y': .5}
                     theme_text_color: 'Custom'
-                    icon_color: app.theme_cls.primary_dark
+                    icon_color: app.theme_cls.primary_light
                     on_release: root.settings_dialog()
         
             MDRelativeLayout:
@@ -100,44 +174,24 @@
                     id: cam
                     pos_hint: {'center_x': .5, 'center_y': .58}
                     size: self.texture_size[0]*.84, self.texture_size[1]*.84
+                    play: True
                 
                 MDLabel:
                     id: info _lbl
-                    text: f'{app.directory}'
+                    text: 'Camera'
                     theme_text_color: 'Custom'
-                    text_color: 'black'
+                    text_color: 1, 0, 0, 1
                     pos_hint: {'center_x': .5, 'top': 1}
                     font_style: 'Button'
                     font_size: dp(10)
                     italic : True
-                    halign: 'left'
+                    halign: 'right'
                     size_hint_y: None
                     height: self.texture_size[1]
-                
-                MDBoxLayout:
-                    pos_hint: {'center_x': .5, 'center_y': .14}
-                    size_hint_x: .8
-                    adaptive_height: True
-                    
-                    MDSlider:
-                        id: interval
-                        min: .5
-                        max: 5
-                        value: cam.burst_timestop
-                        step: .5
-                        on_value: cam.burst_timestop = self.value
-                        
-                    MDSlider:
-                        id: quantity
-                        min: 1
-                        max: 10
-                        value: cam.quantity
-                        step: 1
-                        on_value: cam.quantity = self.value
                     
                 MagicIcoButton:
                     icon: 'camera'
-                    pos_hint: {'center_x': .5, 'center_y': .07}
+                    pos_hint: {'center_x': .5, 'center_y': .11}
                     on_press: self.wobble()
                     on_release:
                         cam.take_pic()
@@ -145,7 +199,7 @@
                 MagicIcoButton:
                     id: burst_btn
                     icon: "camera-burst"
-                    pos_hint: {'center_x': .3, 'center_y': .04}
+                    pos_hint: {'center_x': .3, 'center_y': .06}
                     md_bg_color: app.theme_cls.primary_light
                     on_press: self.wobble()
                     on_release:
@@ -154,7 +208,7 @@
                 MagicIcoButton:
                     id: video_btn
                     icon: "video"
-                    pos_hint: {'center_x': .7, 'center_y': .04}
+                    pos_hint: {'center_x': .7, 'center_y': .06}
                     md_bg_color: app.theme_cls.primary_light
                     on_release: cam.show()
             
@@ -165,9 +219,8 @@
     		    effects: [ew.VerticalBlurEffect(size=20), ew.HorizontalBlurEffect(size=10)]
     		    
                 FitImage:
-                    id: bakground
-                    source: ''
-                    opacity: 1
+                    id: background
+                    opacity: 0.3
             
             MDBoxLayout:
                 orientation: 'vertical'
@@ -193,16 +246,16 @@
                     allow_stretch: True
                     canvas:
                         Color:
-                            rgba: 1, 0, 0, 1
+                            rgba: 0, .12, .24, 1
                         Line:
-                            rounded_rectangle: (self.x, self.y, self.width, self.height, dp(8))
-                    
+                            rounded_rectangle: (self.x, self.y-dp(12), self.width, self.height+dp(24), dp(24))
+                            width: dp(4)
                     
                 ScrollView:
                 
                     MDGridLayout:
                         id: grid     
-                        rows: 4
+                        cols: 3
                         spacing: dp(5)
                         padding: [dp(13), dp(30), dp(13), dp(30)]
                         adaptive_height: True
@@ -212,5 +265,3 @@
         
         MDNavigationDrawer:
             id: nav_drawer
-        
-            
